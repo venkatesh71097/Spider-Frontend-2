@@ -1,0 +1,209 @@
+<html>
+<head>
+
+    <title>Spider pong(HORIZONTAL)</title>
+    <style>
+    body
+    {
+        background-color:green;
+    }
+    canvas 
+    {
+        display: block;
+        position: absolute;
+        margin: auto;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+    }
+
+    #title
+    {   
+        text-align:center;
+        font-family:cursive;
+        font-size:20px;
+        color:red;
+    }
+
+    #demo1
+    {
+        float:left;
+        font-size:30px;
+    }
+
+    #demo2
+    {
+        float:right;
+        font-size:30px;
+    }
+    </style>
+</head>
+
+<body>
+<p id= "title">SPIDER PONG GAME</p>
+<script>
+
+window.alert("Instructions: 1. The paddle is arranged randomly;2.Only horizontal ball movement"); 
+var b= 500, h = 500,count=0,pscore=0,cscore=0,canvas,altpaddle,altthis,ctx,key,
+
+//userplayer
+player = {
+    x: null,
+    y: null,
+    width:  20,
+    height: 100,
+
+    update: function() {
+        if (key[38]) this.y -= 5;
+        if (key[40]) this.y +=5;
+        this.y = Math.max(Math.min(this.y, h - this.height), 0);
+    },
+
+    draw: function() {
+        ctx.fillRect(this.x, this.y, this.width, this.height);
+    }
+},
+//computerplayer
+comp = {
+    x: null,
+    y: null,
+    width:  20,
+    height: 100,
+
+    update: function() {
+
+        var desty = ball.y - (this.height - ball.side);
+        this.y += (desty - this.y) ;
+        this.y = Math.max(Math.min(this.y, h- this.height), 0);
+    },
+    draw: function() {
+        ctx.fillRect(this.x, this.y, this.width, this.height);
+    }
+},
+
+//balldesignandcontrol
+ball = {
+    x:   null,
+    y:   null,
+    vel: null,
+    side:  20,
+    speed: 12,
+    serve: function(side) {
+        this.x = side===1 ? player.x+player.width : comp.x - this.side;
+        this.y = Math.random()*(h - this.side);
+
+        this.vel = {
+            x: side*this.speed*Math.cos(0),
+            y: this.speed*Math.sin(0)
+        }
+    },
+    update: function() {
+        this.x += this.vel.x;
+        this.y += this.vel.y;
+        if (0 > this.y || this.y+this.side > h) {
+            var offset = this.vel.y < 0 ? 0 - this.y : h - (this.y+this.side);
+            this.y += 2*offset;
+            this.vel.y *= -1;
+        }
+//what happens when ball collides?
+        var collide = function(ax, ay, aw, ah, bx, by, bw, bh) {
+            return ax < bx+bw && ay < by+bh && bx < ax+aw && by < ay+ah;
+        };
+//paddlecontrol
+        var paddle = this.vel.x < 0 ? player : comp;
+        if (collide(paddle.x, paddle.y, paddle.width, paddle.height,
+                this.x, this.y, this.side, this.side)
+        ) { 
+
+            this.x = paddle===player ? player.x+player.width : comp.x - this.side;
+            altpaddle=paddle.y;
+            altthis=this.y;
+            this.y=Math.floor(Math.random()*altthis);
+
+            paddle.y=Math.floor(Math.random()*altpaddle);
+             this.vel.x = (paddle===player ? 1 : -1)*this.speed*Math.cos(0);
+            this.vel.y = this.speed*Math.sin(0);
+            count++;
+            if(paddle==player)
+                pscore++;
+            else 
+                cscore++;
+            document.getElementById("demo1").innerHTML="Player: " + pscore;
+            document.getElementById("demo2").innerHTML="Computer:"   + cscore;
+
+        }
+//when ball leaves the canvas?
+        if (0 > this.x+this.side || this.x > b) {
+            this.serve(paddle===player ? 1 : -1);
+            if(count%2==0)
+                window.alert("Player wins with" + pscore + "points");
+            else 
+                window.alert("Computer wins with" + cscore + "points");
+            window.alert("gameOver");
+            location.reload();
+
+        }
+    },
+
+    draw: function() {
+        ctx.fillRect(this.x, this.y, this.side, this.side);
+    }
+};
+
+function main() {
+
+    canvas = document.createElement("canvas");
+    canvas.width = b;
+    canvas.height = h;
+    ctx = canvas.getContext("2d");
+    document.body.appendChild(canvas);
+    key = {};
+
+    document.addEventListener("keydown", function(evt) {
+        key[evt.keyCode] = true;
+    });
+    document.addEventListener("keyup", function(evt) {
+        delete key[evt.keyCode];
+    });
+    init(); 
+
+    var loop = function() {
+        update();
+        draw();
+        window.requestAnimationFrame(loop, canvas);
+    };
+    window.requestAnimationFrame(loop, canvas);
+}
+
+function init() {
+    player.x = player.width;
+    player.y = (h - player.height);
+    comp.x = b- (player.width + comp.width);
+    comp.y = (h - comp.height);
+    ball.serve(1);
+}
+
+
+function update() {
+    ball.update();
+    player.update();
+    comp.update();
+}
+
+function draw() {
+    ctx.fillRect(0, 0, b, h);
+    ctx.save();
+    ctx.fillStyle = "#ffffff";
+    ball.draw();
+    player.draw();
+    comp.draw();
+    ctx.restore();
+}
+
+main();
+</script>
+<p id="demo1"></p>
+<p id="demo2"></p>
+</body>
+</html>
